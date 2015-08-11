@@ -26,7 +26,6 @@ manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 migrate = Migrate(app, db)
-manager.add_command('db', MigrateCommand)
 
 
 #defines the roles table using SQLAlchemy ORM
@@ -34,10 +33,8 @@ class Role(db.Model):
 	__tablename__ = 'roles'
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(64), unique=True)
+	users = db.relationship('User', backref='role', lazy='dynamic')
 	
-	#defining relationship with users table
-	users= db.relationship('User', backref='role')
-
 	def __repr__(self):
 		return '<Role %r>' % self.name
 
@@ -46,9 +43,7 @@ class User(db.Model):
 	__tablename__ = 'users'
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(64), unique=True, index=True)
-
-	#defining relationship iwth the roles table
-	rold_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+	role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
 	def __repr__(self):
 		return '<User %r>' % self.username
@@ -64,7 +59,7 @@ class NameForm(Form):
 def make_shell_context():
 	return dict(app=app, db=db, User=User, Role=Role)
 manager.add_command("shell", Shell(make_context=make_shell_context))
-
+manager.add_command("db", MigrateCommand)
 
 
 @app.route('/', methods=['GET', 'POST'])
